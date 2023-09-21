@@ -1,0 +1,2 @@
+image_root_path: /path/to/images/folder
+class_names: ['BAS','EOS','EBO','MYC','LYT','MON','NGS','PLA']

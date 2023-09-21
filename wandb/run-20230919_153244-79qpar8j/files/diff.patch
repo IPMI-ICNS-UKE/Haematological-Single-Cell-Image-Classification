@@ -1,0 +1,17 @@
+diff --git a/train_ssl.py b/train_ssl.py
+index a641865..dacd17e 100644
+--- a/train_ssl.py
++++ b/train_ssl.py
+@@ -43,10 +43,10 @@ from eval_ssl import evaluate, summary_evaluation_results
+ @click.option(
+     '--train',
+     help='If you only want to evaluate a trained model choose False. If you want to train a model choose True.',
+-    type=click.BOOL, required=False,default=False,
++    type=click.BOOL, required=True,default=True,
+ )
+ @click.option(
+-    '--path_to_weights', type=click.STRING,required=False, default = '/home/lwenderoth/Documents/Doktorarbeit/Results/Weights/bm/pretrained_bm.pt',
++    '--path_to_weights', type=click.STRING,required=False, default = '/home/lwenderoth/Documents/Promotion/Results/Weights/bm/pretrained_bm.pt',
+     help='Need if train is False. Weights need to match the model structure.'
+ )
+ @click.option(

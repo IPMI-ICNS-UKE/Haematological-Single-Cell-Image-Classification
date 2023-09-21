@@ -1,0 +1,125 @@
+{
+    "os": "Linux-6.2.0-32-generic-x86_64-with-glibc2.35",
+    "python": "3.10.12",
+    "heartbeatAt": "2023-09-19T14:37:48.504840",
+    "startedAt": "2023-09-19T14:37:47.492880",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/home/lwenderoth/Documents/Promotion/Code/cell-classification/train_ssl.py",
+    "codePath": "train_ssl.py",
+    "git": {
+        "remote": "https://github.com/IPMI-ICNS-UKE/cell-classification.git",
+        "commit": "911629aee6b113eeda4cf1332023cabd9d64768f"
+    },
+    "email": "laura.wenderoth@stud.uke.uni-hamburg.de",
+    "root": "/home/lwenderoth/Documents/Promotion/Code/cell-classification",
+    "host": "Beryllium",
+    "username": "lwenderoth",
+    "executable": "/home/lwenderoth/Documents/Promotion/Code/cell-classification/venv_cc/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 3.2619375,
+        "min": 2200.0,
+        "max": 3800.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2.881,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 3.482,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 2.881,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 3.833,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 3.144,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 3.216,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 3.652,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 3.148,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 2.873,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 2.873,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 2.949,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 3.591,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 2.874,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 3.613,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 3.912,
+            "min": 2200.0,
+            "max": 3800.0
+        },
+        {
+            "current": 3.632,
+            "min": 2200.0,
+            "max": 3800.0
+        }
+    ],
+    "disk": {
+        "total": 1832.2072448730469,
+        "used": 1522.8570022583008
+    },
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3090",
+            "memory_total": 25769803776
+        }
+    ],
+    "memory": {
+        "total": 62.68940353393555
+    }
+}

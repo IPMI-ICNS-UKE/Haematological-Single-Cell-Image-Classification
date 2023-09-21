@@ -1,0 +1,3 @@
+image_root_path: /path/to/images/folder
+class_names: ["ART", "BAS", "BLA", "EBO", "EOS", "FGC", "HAC", "KSC", "LYI", "LYT", "MMZ", "MON", "MYB", "NGB",
+                       "NGS", "NIF", "OTH", "PEB", "PLM", "PMO", "ABE"]

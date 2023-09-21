@@ -1,0 +1,37 @@
+diff --git a/configs/dino_config.yml b/configs/dino_config.yml
+index 835d88d..9e4ae5a 100644
+--- a/configs/dino_config.yml
++++ b/configs/dino_config.yml
+@@ -31,7 +31,7 @@ data_loader_parameter:
+   shuffle: True  # only train
+   drop_last: True  # only train
+   batch_size: 256
+-  num_workers: 12
++  num_workers: 2
+ 
+ optimizer_parameter:
+   lr: 0.0001
+diff --git a/train_ssl.py b/train_ssl.py
+index e6d91a3..83b8c89 100644
+--- a/train_ssl.py
++++ b/train_ssl.py
+@@ -50,7 +50,7 @@ from eval_ssl import evaluate, summary_evaluation_results
+     help='Need if train is False. Weights need to match the model structure.'
+ )
+ @click.option(
+-    '--batch_size', type=click.INT,required=True,default=4,
++    '--batch_size', type=click.INT,required=True,default=64,
+     help='Batchsize.'
+ )
+ @click.option(
+@@ -142,8 +142,8 @@ def run(device,train,path_to_weights,dataset,batch_size,teacher_momentum,model,s
+     backbone = load_model(model=model,model_parameter=config['model_parameter'],device=device)
+ 
+     classifier_pipeline = Pipeline([
+-        ('standardizer', PowerTransformer()),
+-        ('pca', PCA()),
++        # ('standardizer', PowerTransformer()),
++        # ('pca', PCA()),
+         ('classifier', SVC(probability=True))
+     ])
+ 
