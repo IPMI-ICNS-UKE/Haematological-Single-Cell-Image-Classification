@@ -1,0 +1,299 @@
+diff --git a/configs/blood_acevedo.yml b/configs/blood_acevedo.yml
+index 65d015c..3573058 100644
+--- a/configs/blood_acevedo.yml
++++ b/configs/blood_acevedo.yml
+@@ -1,2 +1,2 @@
+-image_root_path: /path/to/images/folder
++image_root_path: /home/crohling/Documents/cell_classification/images
+ class_names: ['BAS','EOS','EBO','MYC','LYT','MON','NGS','PLA']
+\ No newline at end of file
+diff --git a/configs/blood_matek.yml b/configs/blood_matek.yml
+index 8314f5f..65b4c29 100644
+--- a/configs/blood_matek.yml
++++ b/configs/blood_matek.yml
+@@ -1,2 +1,2 @@
+-image_root_path: /path/to/images/folder
++image_root_path: /home/crohling/Documents/cell_classification/images
+ class_names: ['BAS','EBO','EOS','KSC','LYA','LYT','MMZ','MOB','MON','MYB','MYO','NGB','NGS','PMB','PMO']
+\ No newline at end of file
+diff --git a/configs/blood_raabin.yml b/configs/blood_raabin.yml
+index 6213ff2..7f232ac 100644
+--- a/configs/blood_raabin.yml
++++ b/configs/blood_raabin.yml
+@@ -1,2 +1,2 @@
+-image_root_path: /path/to/images/folder
++image_root_path: /home/crohling/Documents/cell_classification/images
+ class_names : ['BAS','EOS','LYT','MON','NGS']
+\ No newline at end of file
+diff --git a/configs/bm.yml b/configs/bm.yml
+index 1ff9ece..315a31c 100644
+--- a/configs/bm.yml
++++ b/configs/bm.yml
+@@ -1,3 +1,3 @@
+-image_root_path: /path/to/images/folder
++image_root_path: /home/crohling/Documents/cell_classification/images
+ class_names: ["ART", "BAS", "BLA", "EBO", "EOS", "FGC", "HAC", "KSC", "LYI", "LYT", "MMZ", "MON", "MYB", "NGB",
+                        "NGS", "NIF", "OTH", "PEB", "PLM", "PMO", "ABE"]
+\ No newline at end of file
+diff --git a/eval_ssl.py b/eval_ssl.py
+index 58be433..e325c98 100644
+--- a/eval_ssl.py
++++ b/eval_ssl.py
+@@ -28,9 +28,6 @@ from utils.ssl import extract_features, load_data_eval, map_results
+ from sparsam.helper import uniform_train_test_splitting, recursive_dict
+ 
+ 
+-
+-
+-
+ #-----------------------------------------------------------------------------------------------------------------------
+ #%%
+ def summary_evaluation_results(report_path,n_sample,classifier):
+@@ -69,8 +66,9 @@ def summary_evaluation_results(report_path,n_sample,classifier):
+     df_results.to_csv(Path(report_path)/'results_mean_std.csv')
+ 
+ 
+-def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_iter,save_dir=None):
+-    config_fit, config_eval, train_loader, test_loader =  load_data_eval(fit_dataset,eval_dataset,batch_size=batch_size)
++def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_iter,save_dir=None, n_sample_eval=0):
++
++    config_fit, config_eval, train_loader, test_loader =load_data_eval(fit_dataset,eval_dataset,batch_size=batch_size)
+     time = datetime.datetime.now()
+     if save_dir is None:
+         save_dir = Path(config_fit['save_path'])/ Path('Evaluation')/ f'fit_{fit_dataset}_eval_{eval_dataset}' /Path(f'{time.year}_{time.month}_{time.day}-{time.hour}{time.minute}')
+@@ -100,13 +98,16 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
+     results_overview = {'n_sample': [], 'iteration': [], 'classifier': [], 'bal_acc': []}
+     if n_iter is not None:
+         config_fit['n_iterations'] = n_iter
++    if n_sample_eval != 0:
++        n_sample_eval = [n_sample_eval]
++        config_fit['eval_class_sizes'] = n_sample_eval
+ 
+-
+-    for eval_class_size in tqdm.tqdm(config_fit['eval_class_sizes']):
+-        for classifier_name in config_fit['classifier']:
++    for eval_class_size in config_fit['eval_class_sizes']:
++        for classifier_name in tqdm.tqdm(config_fit['classifier']):
+             list_df_metics = []
+             cfms = []
+-            for iteration in range(config_fit['n_iterations']):
++            class_names = []
++            for iteration in tqdm.tqdm(range(config_fit['n_iterations'])):
+                 train_features, train_labels, _, _ = uniform_train_test_splitting(
+                     features['train'], labels['train'], n_samples_class=eval_class_size, seed=int(iteration)
+                 )
+@@ -121,7 +122,7 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
+                 classifier_pipeline = Pipeline([('standardizer', standardizer), ('pca', pca), ('classifier', classifier)])
+                 classifier_pipeline.fit(X=train_features, y=train_labels)
+                 test_probas = classifier_pipeline.predict_proba(features['test'])
+-                test_preds, eval_labels = map_results(test_probas,labels['test'],config_fit['class_names'],config_eval['class_names'])
++                test_preds, eval_labels, class_names = map_results(test_probas, labels['test'], config_fit['class_names'], config_eval['class_names'])
+ 
+ 
+                 report = classification_report(eval_labels, test_preds,labels=config_fit['class_names'], target_names=config_fit['class_names'], output_dict=True)
+@@ -133,19 +134,22 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
+                     dill.dump((features['test'], labels['test'],test_preds), h)
+ 
+                 #save_confusionsmatrix
+-                cm = confusion_matrix(eval_labels, test_preds, labels = config_fit['class_names'])
++
++                eval_label_pred_pair = [(x,y) for x,y in zip(eval_labels, test_preds) if x in class_names]
++                eval_labels, test_preds = list(zip(*eval_label_pred_pair))
++
++                cm = confusion_matrix(eval_labels, test_preds, labels=class_names)
+                 cfms.append(np.array(cm))
+-                cm_df = pd.DataFrame(cm, index=config_fit['class_names'], columns=config_fit['class_names'])
++                cm_df = pd.DataFrame(cm, index=class_names, columns=class_names)
+                 os.makedirs(Path(config_fit['save_path'] )/'cmfs', exist_ok=True)
+                 cm_df.to_csv(Path(config_fit['save_path'] )/'cmfs'/ Path(f'confusion_matrix_{classifier_name}_{eval_class_size}_iter_{iteration}.csv'), index=True, header=True)
+ 
+-                precision, recall, f1, _ = precision_recall_fscore_support(eval_labels, test_preds, average=None)
++                precision, recall, f1, _ = precision_recall_fscore_support(eval_labels, test_preds, average=None, labels=class_names)
+                 macro_precision = precision_score(eval_labels, test_preds, average='macro')
+                 macro_recall = recall_score(eval_labels, test_preds, average='macro')
+                 macro_f1 = f1_score(eval_labels, test_preds, average='macro')
+-                class_labels = np.unique(eval_labels)
+                 metrics_df = pd.DataFrame({'Precision': precision, 'Recall': recall, 'F1 Score': f1},
+-                                          index=class_labels)
++                                          index=class_names)
+                 metrics_df.loc['All'] = [macro_precision, macro_recall, macro_f1]
+ 
+                 os.makedirs(Path(config_fit['save_path']) / 'metrics', exist_ok=True)
+@@ -161,10 +165,10 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
+             mean_array = np.mean(cfms, axis=0)
+             std_array = np.std(cfms, axis=0)
+             os.makedirs(Path(config_fit['save_path']) / 'cmfs_overview', exist_ok=True)
+-            cm_mean_df = pd.DataFrame(mean_array, index=config_fit['class_names'], columns=config_fit['class_names'])
++            cm_mean_df = pd.DataFrame(mean_array, index=class_names, columns=class_names)
+             cm_mean_df.to_csv(Path(config_fit['save_path']) / 'cmfs_overview' / Path(
+                 f'confusion_matrix_{classifier_name}_{eval_class_size}_mean.csv'), index=True, header=True)
+-            cm_std_df = pd.DataFrame(std_array, index=config_fit['class_names'], columns=config_fit['class_names'])
++            cm_std_df = pd.DataFrame(std_array, index=class_names, columns=class_names)
+             cm_std_df.to_csv(Path(config_fit['save_path']) / 'cmfs_overview' / Path(
+                 f'confusion_matrix_{classifier_name}_{eval_class_size}_std.csv'), index=True, header=True)
+ 
+@@ -233,7 +237,7 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
+     help='To only use #number of images to train self-supervised'
+ )
+ @click.option(
+-    '--n_iter', type=click.INT,required=False, default = 1,
++    '--n_iter', type=click.INT, required=False, default=1,
+     help='How often the classifier is fitted using random images per class'
+ )
+ @click.option(
+@@ -244,9 +248,8 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
+     '--classifier', type=click.STRING, required=False, default='ALL',
+     help='choose SVC, LR, KNN or ALL'
+  )
+-
+-def run(device,train,path_to_weights,dataset_fit,dataset_eval,batch_size,teacher_momentum,model,save_path,max_train_image_number,n_iter,
+-        n_sample_eval,classifier,):
++def run(device, train, path_to_weights, dataset_fit, dataset_eval, batch_size, teacher_momentum, model, save_path,max_train_image_number,n_iter,
++        n_sample_eval, classifier,):
+ 
+ 
+     config, data_set_config = load_config(dataset_fit)
+@@ -276,7 +279,7 @@ def run(device,train,path_to_weights,dataset_fit,dataset_eval,batch_size,teacher
+     data_loader_parameter['drop_last'] = False
+ 
+ 
+-    report_path = evaluate(device, path_to_weights, dataset_fit,dataset_eval, batch_size, model, n_iter=n_iter,save_dir=Path(config['save_path'])/'evaluation')
++    report_path = evaluate(device, path_to_weights, dataset_fit,dataset_eval, batch_size, model, n_iter=n_iter,save_dir=Path(config['save_path'])/'evaluation', n_sample_eval=n_sample_eval)
+     #update save parameter
+     save_parameter = {'dataset': f'fit_{dataset_fit}_eval_{dataset_eval}', 'device': device, 'if train': train, 'path_to_weights': path_to_weights,
+                       'batch_size': batch_size,
+@@ -289,10 +292,13 @@ def run(device,train,path_to_weights,dataset_fit,dataset_eval,batch_size,teacher
+         config['n_iterations'] = n_sample_eval
+ 
+ 
+-
+     summary_evaluation_results(report_path, n_sample=config['n_iterations'], classifier=classifier)
+ 
+ if __name__ == "__main__":
+     warnings.filterwarnings("ignore", category=UndefinedMetricWarning, module='sklearn.metrics')
+     warnings.filterwarnings("ignore", category=UserWarning)
++    # run("cuda:0", False, "/home/crohling/Documents/cell_classification/Weights/pretrained_bm.pt", "blood_matek", "blood_acevedo",
++    #     256, 0.9995, "xcit_small_12_p8_224_dist", "/home/crohling/Documents/cell_classification/unsupervised_dino_bm_25", None,
++    #     1, 100, "ALL")
+     run()
++
+diff --git a/eval_supervised.py b/eval_supervised.py
+index 822d9aa..11e82a7 100644
+--- a/eval_supervised.py
++++ b/eval_supervised.py
+@@ -114,7 +114,7 @@ def evaluate(
+         save_path = config['save_path']
+ 
+     time = datetime.datetime.now()
+-    save_path = Path(save_path) / dataset_eval / Path(f'{time.year}_{time.month}_{time.day}-{time.hour}{time.minute}')
++    save_path = Path(save_path) /f"train_{dataset_train}_eval_{dataset_eval}" / Path(f'{time.year}_{time.month}_{time.day}-{time.hour}{time.minute}_{time.second}')
+ 
+     if batch_size is None:
+         config['batch_size'] = batch_size
+@@ -163,11 +163,13 @@ def evaluate(
+     predictions = []
+     true_labels = []
+ 
+-    considered_train_class = eval_classes.copy()
++    considered_train_class = train_classes.copy()
+     if 'MYC' in eval_classes:
+         considered_train_class.extend(['MMZ', 'PMO', 'MYB'])
+     if 'NGB' not in eval_classes:
+         considered_train_class.append('NGB')
++
++        
+     with torch.no_grad():
+         for images, labels_eval in test_loader:
+             images, labels_eval = images.to(device), labels_eval.to(device)
+@@ -191,13 +193,26 @@ def evaluate(
+             predictions.extend(predicted)
+             true_labels.extend(labels_eval)
+ 
+-    confusion_mat = confusion_matrix(true_labels, predictions)
+-
+-    precision, recall, f1, _ = precision_recall_fscore_support(true_labels, predictions, average=None)
+-    macro_precision = precision_score(true_labels, predictions, average='macro')
+-    macro_recall = recall_score(true_labels, predictions, average='macro')
+-    macro_f1 = f1_score(true_labels, predictions, average='macro')
+-    class_labels = np.unique(true_labels)
++    considered_train_class = train_classes.copy()
++    if 'MYC' in eval_classes:
++        if "MMZ" in considered_train_class or "PMO" in considered_train_class or "MYB" in considered_train_class:
++            considered_train_class.append("MYC")
++            considered_train_class.remove("MMZ")
++            considered_train_class.remove('PMO')
++            considered_train_class.remove("MYB")
++    if 'NGB' not in eval_classes:
++        if "NGB" in considered_train_class:
++            considered_train_class.append("NGS")
++
++    class_labels = list(set(considered_train_class).intersection(eval_classes))
++    class_labels = sorted(class_labels)
++    confusion_mat = confusion_matrix(true_labels, predictions, labels = class_labels)
++
++    precision, recall, f1, _ = precision_recall_fscore_support(true_labels, predictions, average=None, labels=class_labels)
++    macro_precision = precision_score(true_labels, predictions, average='macro', labels=class_labels)
++    macro_recall = recall_score(true_labels, predictions, average='macro', labels=class_labels)
++    macro_f1 = f1_score(true_labels, predictions, average='macro', labels=class_labels)
++    # class_labels = np.unique(true_labels)
+     metrics_df = pd.DataFrame({'Precision': precision, 'Recall': recall, 'F1 Score': f1}, index=class_labels)
+     metrics_df.loc['All'] = [macro_precision, macro_recall, macro_f1]
+ 
+diff --git a/train_supervised.py b/train_supervised.py
+index a1571b2..e32dc6d 100644
+--- a/train_supervised.py
++++ b/train_supervised.py
+@@ -45,7 +45,8 @@ from eval_supervised import evaluate
+     help='Batch size.'
+ )
+ @click.option(
+-    '--model_name', type=click.STRING, required=True, default='xcit_small_12_p8_224_dist',
++    '--model_name', type=click.STRING, required=True, default='wandb'
++                                                              'wand',
+     help='Choose a model from the timm library'
+ )
+ @click.option(
+diff --git a/utils/ssl.py b/utils/ssl.py
+index a8c3da6..ed5aeea 100644
+--- a/utils/ssl.py
++++ b/utils/ssl.py
+@@ -256,19 +256,27 @@ def load_image_as_np(image_path, target_size=(128,128)):
+ def map_results(test_probas,labels_test,class_names_train,class_names_eval):
+     labels_eval = labels_test
+     outputs = torch.from_numpy(test_probas)
++    class_names_t = list(class_names_train)
++    class_names_e = list(class_names_eval)
+ 
+     _, predicted = torch.max(outputs, 1)
+     train_index_to_string = {idx: class_name for idx, class_name in enumerate(class_names_train)}
+     predicted = [train_index_to_string[idx.item()] for idx in predicted]
+     if 'MYC' in class_names_eval:
+         predicted = ['MYC' if label in ['MMZ', 'PMO', 'MYB'] else label for label in predicted]
++        if "MMZ" in class_names_train or "PMO" in class_names_train or "MYB" in class_names_train:
++            class_names_t.append("MYC")
++            class_names_t.remove("MMZ")
++            class_names_t.remove('PMO')
++            class_names_t.remove("MYB")
+     if 'NGB' not in class_names_eval:
+         predicted = ['NGS' if label in ['NGB'] else label for label in predicted]
+-
++        if "NGB" in class_names_train:
++            class_names_t.append("NGS")
+     eval_index_to_class = {idx: class_name for idx, class_name in enumerate(class_names_eval)}
+     labels_eval = [eval_index_to_class[idx.item()] for idx in labels_eval]
+-
+-    return predicted, labels_eval
++    class_names = list(set(class_names_t).intersection(class_names_eval))
++    return predicted, labels_eval, class_names
+ 
+ #-----------------------------------------------------------------------------------------------------------------------
+ 
+diff --git a/wandb/latest-run b/wandb/latest-run
+index 213af21..ae8c192 120000
+--- a/wandb/latest-run
++++ b/wandb/latest-run
+@@ -1 +1 @@
+-run-20230919_171702-e7y9t7mn
+\ No newline at end of file
++run-20231031_230119-t1yyce8h
+\ No newline at end of file

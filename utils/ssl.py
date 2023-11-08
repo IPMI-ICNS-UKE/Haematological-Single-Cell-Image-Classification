@@ -256,19 +256,27 @@ def load_image_as_np(image_path, target_size=(128,128)):
 def map_results(test_probas,labels_test,class_names_train,class_names_eval):
     labels_eval = labels_test
     outputs = torch.from_numpy(test_probas)
+    class_names_t = list(class_names_train)
+    class_names_e = list(class_names_eval)
 
     _, predicted = torch.max(outputs, 1)
     train_index_to_string = {idx: class_name for idx, class_name in enumerate(class_names_train)}
     predicted = [train_index_to_string[idx.item()] for idx in predicted]
     if 'MYC' in class_names_eval:
         predicted = ['MYC' if label in ['MMZ', 'PMO', 'MYB'] else label for label in predicted]
+        if "MMZ" in class_names_train or "PMO" in class_names_train or "MYB" in class_names_train:
+            class_names_t.append("MYC")
+            class_names_t.remove("MMZ")
+            class_names_t.remove('PMO')
+            class_names_t.remove("MYB")
     if 'NGB' not in class_names_eval:
         predicted = ['NGS' if label in ['NGB'] else label for label in predicted]
-
+        if "NGB" in class_names_train:
+            class_names_t.append("NGS")
     eval_index_to_class = {idx: class_name for idx, class_name in enumerate(class_names_eval)}
     labels_eval = [eval_index_to_class[idx.item()] for idx in labels_eval]
-
-    return predicted, labels_eval
+    class_names = list(set(class_names_t).intersection(class_names_eval))
+    return predicted, labels_eval, class_names
 
 #-----------------------------------------------------------------------------------------------------------------------
 

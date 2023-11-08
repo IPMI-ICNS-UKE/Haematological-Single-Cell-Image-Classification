@@ -114,7 +114,7 @@ def evaluate(
         save_path = config['save_path']
 
     time = datetime.datetime.now()
-    save_path = Path(save_path) / dataset_eval / Path(f'{time.year}_{time.month}_{time.day}-{time.hour}{time.minute}')
+    save_path = Path(save_path) /f"train_{dataset_train}_eval_{dataset_eval}" / Path(f'{time.year}_{time.month}_{time.day}-{time.hour}{time.minute}_{time.second}')
 
     if batch_size is None:
         config['batch_size'] = batch_size
@@ -163,11 +163,13 @@ def evaluate(
     predictions = []
     true_labels = []
 
-    considered_train_class = eval_classes.copy()
+    considered_train_class = train_classes.copy()
     if 'MYC' in eval_classes:
         considered_train_class.extend(['MMZ', 'PMO', 'MYB'])
     if 'NGB' not in eval_classes:
         considered_train_class.append('NGB')
+
+        
     with torch.no_grad():
         for images, labels_eval in test_loader:
             images, labels_eval = images.to(device), labels_eval.to(device)
@@ -191,13 +193,26 @@ def evaluate(
             predictions.extend(predicted)
             true_labels.extend(labels_eval)
 
-    confusion_mat = confusion_matrix(true_labels, predictions)
+    considered_train_class = train_classes.copy()
+    if 'MYC' in eval_classes:
+        if "MMZ" in considered_train_class or "PMO" in considered_train_class or "MYB" in considered_train_class:
+            considered_train_class.append("MYC")
+            considered_train_class.remove("MMZ")
+            considered_train_class.remove('PMO')
+            considered_train_class.remove("MYB")
+    if 'NGB' not in eval_classes:
+        if "NGB" in considered_train_class:
+            considered_train_class.append("NGS")
 
-    precision, recall, f1, _ = precision_recall_fscore_support(true_labels, predictions, average=None)
-    macro_precision = precision_score(true_labels, predictions, average='macro')
-    macro_recall = recall_score(true_labels, predictions, average='macro')
-    macro_f1 = f1_score(true_labels, predictions, average='macro')
-    class_labels = np.unique(true_labels)
+    class_labels = list(set(considered_train_class).intersection(eval_classes))
+    class_labels = sorted(class_labels)
+    confusion_mat = confusion_matrix(true_labels, predictions, labels = class_labels)
+
+    precision, recall, f1, _ = precision_recall_fscore_support(true_labels, predictions, average=None, labels=class_labels)
+    macro_precision = precision_score(true_labels, predictions, average='macro', labels=class_labels)
+    macro_recall = recall_score(true_labels, predictions, average='macro', labels=class_labels)
+    macro_f1 = f1_score(true_labels, predictions, average='macro', labels=class_labels)
+    # class_labels = np.unique(true_labels)
     metrics_df = pd.DataFrame({'Precision': precision, 'Recall': recall, 'F1 Score': f1}, index=class_labels)
     metrics_df.loc['All'] = [macro_precision, macro_recall, macro_f1]
 

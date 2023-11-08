@@ -1,0 +1,138 @@
+{
+    "os": "Linux-6.2.0-34-generic-x86_64-with-glibc2.35",
+    "python": "3.10.12",
+    "heartbeatAt": "2023-10-17T10:43:54.341539",
+    "startedAt": "2023-10-17T10:43:53.459080",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--dataset",
+        "blood_acevedo",
+        "--device",
+        "cuda:0",
+        "--batch_size",
+        "4",
+        "--model_name",
+        "xcit_small_12_p8_224_dist",
+        "--save_path",
+        "/home/crohling/Documents/cell_classification/Weights/supervised_clemens",
+        "--num_epochs",
+        "100"
+    ],
+    "state": "running",
+    "program": "/home/crohling/PycharmProjects/pythonProject/cell-classification/train_supervised.py",
+    "codePath": "train_supervised.py",
+    "git": {
+        "remote": "https://github.com/IPMI-ICNS-UKE/cell-classification.git",
+        "commit": "c6281fc4d845b32e560105cdd3cc9ef2f26364c7"
+    },
+    "email": "Clemens.Rohling@t-online.de",
+    "root": "/home/crohling/PycharmProjects/pythonProject/cell-classification",
+    "host": "Boron",
+    "username": "crohling",
+    "executable": "/home/crohling/PycharmProjects/pythonProject/cell-classification/venv/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 3.448,
+        "min": 1200.0,
+        "max": 3700.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3.6,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.599,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.599,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.6,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.599,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.6,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.599,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.6,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.6,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.6,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.6,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.599,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.599,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.6,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.6,
+            "min": 1200.0,
+            "max": 3700.0
+        },
+        {
+            "current": 3.6,
+            "min": 1200.0,
+            "max": 3700.0
+        }
+    ],
+    "disk": {
+        "total": 467.39449310302734,
+        "used": 183.11096954345703
+    },
+    "gpu": "NVIDIA GeForce RTX 2080 Ti",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 2080 Ti",
+            "memory_total": 11811160064
+        }
+    ],
+    "memory": {
+        "total": 62.397865295410156
+    }
+}

@@ -28,9 +28,6 @@ from utils.ssl import extract_features, load_data_eval, map_results
 from sparsam.helper import uniform_train_test_splitting, recursive_dict
 
 
-
-
-
 #-----------------------------------------------------------------------------------------------------------------------
 #%%
 def summary_evaluation_results(report_path,n_sample,classifier):
@@ -69,8 +66,9 @@ def summary_evaluation_results(report_path,n_sample,classifier):
     df_results.to_csv(Path(report_path)/'results_mean_std.csv')
 
 
-def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_iter,save_dir=None):
-    config_fit, config_eval, train_loader, test_loader =  load_data_eval(fit_dataset,eval_dataset,batch_size=batch_size)
+def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_iter,save_dir=None, n_sample_eval=0):
+
+    config_fit, config_eval, train_loader, test_loader =load_data_eval(fit_dataset,eval_dataset,batch_size=batch_size)
     time = datetime.datetime.now()
     if save_dir is None:
         save_dir = Path(config_fit['save_path'])/ Path('Evaluation')/ f'fit_{fit_dataset}_eval_{eval_dataset}' /Path(f'{time.year}_{time.month}_{time.day}-{time.hour}{time.minute}')
@@ -100,13 +98,16 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
     results_overview = {'n_sample': [], 'iteration': [], 'classifier': [], 'bal_acc': []}
     if n_iter is not None:
         config_fit['n_iterations'] = n_iter
+    if n_sample_eval != 0:
+        n_sample_eval = [n_sample_eval]
+        config_fit['eval_class_sizes'] = n_sample_eval
 
-
-    for eval_class_size in tqdm.tqdm(config_fit['eval_class_sizes']):
-        for classifier_name in config_fit['classifier']:
+    for eval_class_size in config_fit['eval_class_sizes']:
+        for classifier_name in tqdm.tqdm(config_fit['classifier']):
             list_df_metics = []
             cfms = []
-            for iteration in range(config_fit['n_iterations']):
+            class_names = []
+            for iteration in tqdm.tqdm(range(config_fit['n_iterations'])):
                 train_features, train_labels, _, _ = uniform_train_test_splitting(
                     features['train'], labels['train'], n_samples_class=eval_class_size, seed=int(iteration)
                 )
@@ -121,7 +122,7 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
                 classifier_pipeline = Pipeline([('standardizer', standardizer), ('pca', pca), ('classifier', classifier)])
                 classifier_pipeline.fit(X=train_features, y=train_labels)
                 test_probas = classifier_pipeline.predict_proba(features['test'])
-                test_preds, eval_labels = map_results(test_probas,labels['test'],config_fit['class_names'],config_eval['class_names'])
+                test_preds, eval_labels, class_names = map_results(test_probas, labels['test'], config_fit['class_names'], config_eval['class_names'])
 
 
                 report = classification_report(eval_labels, test_preds,labels=config_fit['class_names'], target_names=config_fit['class_names'], output_dict=True)
@@ -133,19 +134,22 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
                     dill.dump((features['test'], labels['test'],test_preds), h)
 
                 #save_confusionsmatrix
-                cm = confusion_matrix(eval_labels, test_preds, labels = config_fit['class_names'])
+
+                eval_label_pred_pair = [(x,y) for x,y in zip(eval_labels, test_preds) if x in class_names]
+                eval_labels, test_preds = list(zip(*eval_label_pred_pair))
+
+                cm = confusion_matrix(eval_labels, test_preds, labels=class_names)
                 cfms.append(np.array(cm))
-                cm_df = pd.DataFrame(cm, index=config_fit['class_names'], columns=config_fit['class_names'])
+                cm_df = pd.DataFrame(cm, index=class_names, columns=class_names)
                 os.makedirs(Path(config_fit['save_path'] )/'cmfs', exist_ok=True)
                 cm_df.to_csv(Path(config_fit['save_path'] )/'cmfs'/ Path(f'confusion_matrix_{classifier_name}_{eval_class_size}_iter_{iteration}.csv'), index=True, header=True)
 
-                precision, recall, f1, _ = precision_recall_fscore_support(eval_labels, test_preds, average=None)
+                precision, recall, f1, _ = precision_recall_fscore_support(eval_labels, test_preds, average=None, labels=class_names)
                 macro_precision = precision_score(eval_labels, test_preds, average='macro')
                 macro_recall = recall_score(eval_labels, test_preds, average='macro')
                 macro_f1 = f1_score(eval_labels, test_preds, average='macro')
-                class_labels = np.unique(eval_labels)
                 metrics_df = pd.DataFrame({'Precision': precision, 'Recall': recall, 'F1 Score': f1},
-                                          index=class_labels)
+                                          index=class_names)
                 metrics_df.loc['All'] = [macro_precision, macro_recall, macro_f1]
 
                 os.makedirs(Path(config_fit['save_path']) / 'metrics', exist_ok=True)
@@ -161,10 +165,10 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
             mean_array = np.mean(cfms, axis=0)
             std_array = np.std(cfms, axis=0)
             os.makedirs(Path(config_fit['save_path']) / 'cmfs_overview', exist_ok=True)
-            cm_mean_df = pd.DataFrame(mean_array, index=config_fit['class_names'], columns=config_fit['class_names'])
+            cm_mean_df = pd.DataFrame(mean_array, index=class_names, columns=class_names)
             cm_mean_df.to_csv(Path(config_fit['save_path']) / 'cmfs_overview' / Path(
                 f'confusion_matrix_{classifier_name}_{eval_class_size}_mean.csv'), index=True, header=True)
-            cm_std_df = pd.DataFrame(std_array, index=config_fit['class_names'], columns=config_fit['class_names'])
+            cm_std_df = pd.DataFrame(std_array, index=class_names, columns=class_names)
             cm_std_df.to_csv(Path(config_fit['save_path']) / 'cmfs_overview' / Path(
                 f'confusion_matrix_{classifier_name}_{eval_class_size}_std.csv'), index=True, header=True)
 
@@ -233,7 +237,7 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
     help='To only use #number of images to train self-supervised'
 )
 @click.option(
-    '--n_iter', type=click.INT,required=False, default = 1,
+    '--n_iter', type=click.INT, required=False, default=1,
     help='How often the classifier is fitted using random images per class'
 )
 @click.option(
@@ -244,9 +248,8 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
     '--classifier', type=click.STRING, required=False, default='ALL',
     help='choose SVC, LR, KNN or ALL'
  )
-
-def run(device,train,path_to_weights,dataset_fit,dataset_eval,batch_size,teacher_momentum,model,save_path,max_train_image_number,n_iter,
-        n_sample_eval,classifier,):
+def run(device, train, path_to_weights, dataset_fit, dataset_eval, batch_size, teacher_momentum, model, save_path,max_train_image_number,n_iter,
+        n_sample_eval, classifier,):
 
 
     config, data_set_config = load_config(dataset_fit)
@@ -276,7 +279,7 @@ def run(device,train,path_to_weights,dataset_fit,dataset_eval,batch_size,teacher
     data_loader_parameter['drop_last'] = False
 
 
-    report_path = evaluate(device, path_to_weights, dataset_fit,dataset_eval, batch_size, model, n_iter=n_iter,save_dir=Path(config['save_path'])/'evaluation')
+    report_path = evaluate(device, path_to_weights, dataset_fit,dataset_eval, batch_size, model, n_iter=n_iter,save_dir=Path(config['save_path'])/'evaluation', n_sample_eval=n_sample_eval)
     #update save parameter
     save_parameter = {'dataset': f'fit_{dataset_fit}_eval_{dataset_eval}', 'device': device, 'if train': train, 'path_to_weights': path_to_weights,
                       'batch_size': batch_size,
@@ -289,10 +292,13 @@ def run(device,train,path_to_weights,dataset_fit,dataset_eval,batch_size,teacher
         config['n_iterations'] = n_sample_eval
 
 
-
     summary_evaluation_results(report_path, n_sample=config['n_iterations'], classifier=classifier)
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore", category=UndefinedMetricWarning, module='sklearn.metrics')
     warnings.filterwarnings("ignore", category=UserWarning)
+    # run("cuda:0", False, "/home/crohling/Documents/cell_classification/Weights/pretrained_bm.pt", "blood_matek", "blood_acevedo",
+    #     256, 0.9995, "xcit_small_12_p8_224_dist", "/home/crohling/Documents/cell_classification/unsupervised_dino_bm_25", None,
+    #     1, 100, "ALL")
     run()
+

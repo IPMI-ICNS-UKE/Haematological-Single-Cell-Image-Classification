@@ -1,0 +1,90 @@
+diff --git a/configs/blood_acevedo.yml b/configs/blood_acevedo.yml
+index 65d015c..3573058 100644
+--- a/configs/blood_acevedo.yml
++++ b/configs/blood_acevedo.yml
+@@ -1,2 +1,2 @@
+-image_root_path: /path/to/images/folder
++image_root_path: /home/crohling/Documents/cell_classification/images
+ class_names: ['BAS','EOS','EBO','MYC','LYT','MON','NGS','PLA']
+\ No newline at end of file
+diff --git a/configs/blood_matek.yml b/configs/blood_matek.yml
+index 8314f5f..65b4c29 100644
+--- a/configs/blood_matek.yml
++++ b/configs/blood_matek.yml
+@@ -1,2 +1,2 @@
+-image_root_path: /path/to/images/folder
++image_root_path: /home/crohling/Documents/cell_classification/images
+ class_names: ['BAS','EBO','EOS','KSC','LYA','LYT','MMZ','MOB','MON','MYB','MYO','NGB','NGS','PMB','PMO']
+\ No newline at end of file
+diff --git a/configs/blood_raabin.yml b/configs/blood_raabin.yml
+index 6213ff2..7f232ac 100644
+--- a/configs/blood_raabin.yml
++++ b/configs/blood_raabin.yml
+@@ -1,2 +1,2 @@
+-image_root_path: /path/to/images/folder
++image_root_path: /home/crohling/Documents/cell_classification/images
+ class_names : ['BAS','EOS','LYT','MON','NGS']
+\ No newline at end of file
+diff --git a/configs/bm.yml b/configs/bm.yml
+index 1ff9ece..315a31c 100644
+--- a/configs/bm.yml
++++ b/configs/bm.yml
+@@ -1,3 +1,3 @@
+-image_root_path: /path/to/images/folder
++image_root_path: /home/crohling/Documents/cell_classification/images
+ class_names: ["ART", "BAS", "BLA", "EBO", "EOS", "FGC", "HAC", "KSC", "LYI", "LYT", "MMZ", "MON", "MYB", "NGB",
+                        "NGS", "NIF", "OTH", "PEB", "PLM", "PMO", "ABE"]
+\ No newline at end of file
+diff --git a/eval_ssl.py b/eval_ssl.py
+index 58be433..232dcc8 100644
+--- a/eval_ssl.py
++++ b/eval_ssl.py
+@@ -28,9 +28,6 @@ from utils.ssl import extract_features, load_data_eval, map_results
+ from sparsam.helper import uniform_train_test_splitting, recursive_dict
+ 
+ 
+-
+-
+-
+ #-----------------------------------------------------------------------------------------------------------------------
+ #%%
+ def summary_evaluation_results(report_path,n_sample,classifier):
+@@ -70,7 +67,8 @@ def summary_evaluation_results(report_path,n_sample,classifier):
+ 
+ 
+ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_iter,save_dir=None):
+-    config_fit, config_eval, train_loader, test_loader =  load_data_eval(fit_dataset,eval_dataset,batch_size=batch_size)
++
++    config_fit, config_eval, train_loader, test_loader =load_data_eval(fit_dataset,eval_dataset,batch_size=batch_size)
+     time = datetime.datetime.now()
+     if save_dir is None:
+         save_dir = Path(config_fit['save_path'])/ Path('Evaluation')/ f'fit_{fit_dataset}_eval_{eval_dataset}' /Path(f'{time.year}_{time.month}_{time.day}-{time.hour}{time.minute}')
+@@ -244,9 +242,8 @@ def evaluate(device,path_to_weights,fit_dataset,eval_dataset,batch_size,model,n_
+     '--classifier', type=click.STRING, required=False, default='ALL',
+     help='choose SVC, LR, KNN or ALL'
+  )
+-
+-def run(device,train,path_to_weights,dataset_fit,dataset_eval,batch_size,teacher_momentum,model,save_path,max_train_image_number,n_iter,
+-        n_sample_eval,classifier,):
++def run(device, train, path_to_weights, dataset_fit, dataset_eval, batch_size, teacher_momentum, model, save_path,max_train_image_number,n_iter,
++        n_sample_eval, classifier,):
+ 
+ 
+     config, data_set_config = load_config(dataset_fit)
+@@ -289,7 +286,6 @@ def run(device,train,path_to_weights,dataset_fit,dataset_eval,batch_size,teacher
+         config['n_iterations'] = n_sample_eval
+ 
+ 
+-
+     summary_evaluation_results(report_path, n_sample=config['n_iterations'], classifier=classifier)
+ 
+ if __name__ == "__main__":
+diff --git a/wandb/latest-run b/wandb/latest-run
+index 213af21..ea64a49 120000
+--- a/wandb/latest-run
++++ b/wandb/latest-run
+@@ -1 +1 @@
+-run-20230919_171702-e7y9t7mn
+\ No newline at end of file
++run-20231017_122612-uicxxtlb
+\ No newline at end of file

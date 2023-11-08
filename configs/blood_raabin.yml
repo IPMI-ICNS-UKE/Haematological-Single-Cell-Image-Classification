@@ -1,2 +1,2 @@
-image_root_path: /path/to/images/folder
+image_root_path: /home/crohling/Documents/cell_classification/images
 class_names : ['BAS','EOS','LYT','MON','NGS']
