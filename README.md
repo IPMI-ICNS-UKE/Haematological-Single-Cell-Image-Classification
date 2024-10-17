@@ -10,11 +10,13 @@ Clone the repository to your local machine:
 git clone https://github.com/IPMI-ICNS-UKE/cell-classification.git
 ```
 
-Install the necessary dependencies:
+Install the necessary dependencies: 
+
 
 ## Data sets
 
-The following data sets were used in this study:
+The following data sets were used in this study:git clone git@github.com:IPMI-ICNS-UKE/cell-classification.git
+
 
 - **Bone Marrow (BM) data set:** A highly unbalanced data set of single bone marrow cell microscopy images that can be found [here](https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=101941770) and is provided by [Matek et al. (2021)](https://doi.org/10.1182/blood.2020010568).
 - **Blood Matek data set:** 
