@@ -10,7 +10,7 @@ Interested? 🤔 Try it out with the **three publicly available blood cell image
 ![Classification balanced accuracy, blood datasets](imgs/wenderoth_visual_abstract-1.png "Balenced Acc for all Blood datasets")
 
 ## 🌟 Features
-
+gi
 This repository showcases the power of **self-supervised learning (SSL)** for hematological cell classification. With SSL, you can enjoy:
 
 1. 🔍 **Meaningful Feature Extraction**: Extract valuable features from cell images **without needing any class labels**!
@@ -18,10 +18,13 @@ This repository showcases the power of **self-supervised learning (SSL)** for he
 3. 📊 **Easy Adaptation**: Adapt your models to new datasets with **minimal labeled data**!
 
 ## Results
-In the following, main results of the performed experiments are presented. 
-
+This study highlights the power of self-supervised learning (SSL) for hematological cell classification and cross-domain adaptation with minimal labeled data. For the Matek blood dataset, our SSL model trained on bone marrow cells achieved state-of-the-art results, showing that direct model transfer is possible without dataset-specific training. For the other datasets, we achieved **state-of-the-art results** with significantly fewer labels and much less computational power. The results are shown in the figure below, which displays **balanced accuracy** for the domain adaptation experiments as a function of the number of samples per class used for classifier fitting. The data covers three blood datasets and various ML classifiers: **Support Vector Machine (SVM)**, **Logistic Regression (LR)**, and **k-nearest neighbours (KNN)**. The **SSL feature extractor**, trained on the Matek BM dataset, remained the same throughout. The **benchmark line** represents the accuracy reported in the original dataset-specific publications using supervised end-to-end deep learning.
 ![Classification balanced accuracy, blood datasets](imgs/balanced_acc_domain_adaption.png "Balenced Acc for all Blood datasets")
-*Figure 1: *
+The two-dimensional embedding of Acevedo blood cell images, computed using UMAP, shows clear clustering of the eight cell classes. These features were extracted using the **SSL model** trained on the **Matek bone marrow dataset** without class labels. This demonstrates that **SSL training on bm effectively captures general cell features of blood cells**, even across different staining and scanning conditions.
+![Classification balanced accuracy, blood datasets](imgs/Fig_6_UMAP_Acevedo.png "Balenced Acc for all Blood datasets")
+
+The following figure shows the **attention heads** of an **SSL-trained (a)** and a **supervised-trained (b)** bone marrow model on a representative cell image. It is evident that the **SSL feature extractor** effectively focuses on the cell, capturing essential features, while the **supervised model** directs its focus to less relevant areas, indicating potential **overfitting** to the training dataset.
+![Classification balanced accuracy, blood datasets](imgs/Fig_5_Attention_heads.png "Balenced Acc for all Blood datasets")
 
 ## How to use
 
@@ -39,7 +42,8 @@ git clone https://github.com/IPMI-ICNS-UKE/cell-classification.git
    ```
 ### 2. Download Data Sets:
 
-The following data sets were used in this study.
+The following data sets were used in this study:
+![Classification balanced accuracy, blood datasets](imgs/Fig_1_Overview.png "Balenced Acc for all Blood datasets")
 - **Bone Marrow (BM) data set:** A highly unbalanced data set of single bone marrow cell microscopy images that can be found [here](https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=101941770) and is provided by [Matek et al. (2021)](https://doi.org/10.1182/blood.2020010568).
 - **Blood Matek data set:** **Matek Blood dataset:** A single-cell morphological dataset of leukocytes from Acute Myeloid Leukemia (AML) patients and non-malignant controls. The dataset can be accessed [here](https://www.cancerimagingarchive.net/collection/aml-cytomorphology_lmu) and is provided by [Matek et al. (2024)](https://www.cancerimagingarchive.net/collection/aml-cytomorphology_lmu).
 - **Blood Acevedo data set:** A dataset of microscopic peripheral blood cell images designed for the development of automatic recognition systems that can be found [here](https://data.mendeley.com/datasets/snkd93bnjr/draft?a=d9582c71-9af0-4e59-9062-df30df05a121) and is provided by [Acevedo et al. (2019)](https://doi.org/10.1016/j.cmpb.2019.105020).
@@ -68,7 +72,19 @@ python eval_ssl.py --dataset_fit blood_matek --dataset_eval blood_matek --device
 -  `--classifier` : Choose which classifiers to use: `SVC`, `LR`, `KNN`, or `ALL`. Type: `string`. Default: `ALL`. 
 
 
-### Retrain SSL feature extractor:
+#### Experiment Overview 🔬 
+
+We conducted several experiments, which can also be replicated using the provided `eval_ssl.py` script. The **SSL feature extractor** was trained on the **Matek BM dataset**, and based on the extracted features, lightweight ML classifiers were trained. Two types of experiments were performed:
+
+1. **Direct Model Transfer**: Using the features from the BM dataset.
+2. **Domain Adaptation**: Using a small amount of labeled data from the target dataset.
+
+The classification performance was then evaluated using the test data of the target datasets.
+
+![Classification balanced accuracy, blood datasets](imgs/Fig_3_Experiments_bm.png "Balenced Acc for all Blood datasets")
+
+
+### 5. Retrain SSL feature extractor:
 ```bash
 python train_ssl.py --dataset bm --device cuda:0 --train True --batch_size 4 --teacher_momentum 0.9995 --model xcit_small_12_p8_224_dist --save_path /path/to/save/results
 ```
