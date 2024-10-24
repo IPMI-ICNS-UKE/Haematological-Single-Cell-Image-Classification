@@ -55,7 +55,7 @@ The following data sets were used in this study:
 
 ### 3. Download trained SSL Feature Extractor
 
-Coming soon!
+Download our feature extractor [here](https://zenodo.org/records/13969212?preview=1&token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImM4ZGMyYTQ4LTNkYWQtNDM2Yy1hMTU2LWFkNjk0YzRlN2FjZCIsImRhdGEiOnt9LCJyYW5kb20iOiI3YWYyZTBmOTRiYTRkOGEzNmI0MzQyMzcxZTRhZGM5MyJ9.2sOEGDg1rX2eJVbio8oZdree4Usg5ZH_GbwTAQjOQR0r04xjP49lkO_ZkVINm4S23qyDKQ5BdkDyVG4X71ju2A)from Zenodo! 
 
 ### 4.  Fit & Evaluate Your Blood Cell Dataset: Personal or Public
 
